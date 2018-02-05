@@ -158,10 +158,8 @@ public:
 
         void rollback();
 
-        bool isEmpty() const
-        {
-            return precommitted_parts.empty();
-        }
+        size_t size() const { return precommitted_parts.size(); }
+        bool isEmpty() const { return precommitted_parts.empty(); }
 
         ~Transaction()
         {
@@ -304,7 +302,7 @@ public:
 
     bool mayBenefitFromIndexForIn(const ASTPtr & left_in_operand) const;
 
-    Int64 getMaxDataPartIndex();
+    Int64 getMaxDataPartVersion();
 
     const NamesAndTypesList & getColumnsListImpl() const override { return columns; }
 
@@ -663,6 +661,9 @@ private:
     /// If part == nullptr, just checks that all type conversions are possible.
     void createConvertExpression(const DataPartPtr & part, const NamesAndTypesList & old_columns, const NamesAndTypesList & new_columns,
         ExpressionActionsPtr & out_expression, NameToNameMap & out_rename_map, bool & out_force_update_metadata) const;
+
+    /// Modify part state to Committed and make contained parts Obsolete.
+    bool commitPartImpl(const DataPartPtr & precommitted_part, std::lock_guard<std::mutex> & data_parts_lock);
 
     /// Calculates column sizes in compressed form for the current state of data_parts. Call with data_parts mutex locked.
     void calculateColumnSizesImpl();
